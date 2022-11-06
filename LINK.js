@@ -36,7 +36,12 @@ function dice(l, r)
 			intersectionSize++;
 			}
 		}
-	return (2.0 * intersectionSize) / (l.length + r.length - 2);
+	// 6/11/2022 changed to spcial purpose adaptation to adopt for name pairs with missing names
+	// simply compare intersection to the shortest string only, not both
+	// based on the assumption there that the longest string is most correct and complete
+	minLength = (l.length > r.length)?r.length:l.length;
+	return intersectionSize/minLength;
+//	return (2.0 * intersectionSize) / (l.length + r.length - 2);
 	}	
 // retrieving file contents in excel format	
 function loadBinaryFile(selector)
