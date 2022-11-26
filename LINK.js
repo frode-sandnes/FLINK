@@ -84,8 +84,10 @@ function loadBinaryFile(selector)
 		});
 	}
 
+// modifed to include - hyphen between name and capitalization of first character after hyphen	
 const capitalize = (str, lower = false) =>
-  (lower ? str.toLowerCase() : str).replace(/(?:^|\s|["'([{])+\S/g, match => match.toUpperCase());
+  (lower ? str.toLowerCase() : str).replace(/(?:^|\s|[-"'([{])+\S/g, match => match.toUpperCase());
+//  (lower ? str.toLowerCase() : str).replace(/(?:^|\s|["'([{])+\S/g, match => match.toUpperCase());
 	;
 
 
@@ -135,6 +137,8 @@ function outputGrid(obj, id, heading, colour, checkboxes, limit = 1000)
 			if (typeof(str) != "undefined")
 				{
 				str = capitalize(str);
+//To get capitalized result in file also 		
+				line[head] = str;
 				}	
 			// put in table			
 			table += "<td>"+str+"</td>";					
