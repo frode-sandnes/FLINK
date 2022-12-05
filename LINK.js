@@ -40,6 +40,13 @@ function dice(l, r)
 	// simply compare intersection to the shortest string only, not both
 	// based on the assumption there that the longest string is most correct and complete
 	minLength = (l.length > r.length)?r.length:l.length;
+	// 5/12/2022 short vietnamese names problem et le tuc vu - very few bigrams
+	// therefore need to adjust minLength in such cases- subdcract ibrams involving space to compensate for this	
+	let [smallest, largest] = (l.length > r.length)? [r, l]: [l, r];
+	if (!smallest.includes(" "))	// smallest does not include space
+		{
+		minLength -= largest.split(" ").length -1; // subtract false bigram counts due to likely missing space
+		}	
 	return intersectionSize/minLength;
 //	return (2.0 * intersectionSize) / (l.length + r.length - 2);
 	}	
