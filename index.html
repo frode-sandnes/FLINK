@@ -5,46 +5,46 @@
 <html>
 	<head>
 		<meta charset="utf-8">
-		<title>LINK: Approximate linking of records</title>
-		<link href="LINK.css" rel="stylesheet">
+		<title>FLINK: Approximate linking of records</title>
+		<link href="FLINK.css" rel="stylesheet">
 		
-		<script src="LINK.js"></script>
+		<script src="FLINK.js"></script>
 		<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.8.0/jszip.js"></script>
 		<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.8.0/xlsx.js"></script>
 		<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.13.1/xlsx.full.min.js"></script> 
 	</head>
 	
 	<body>
-		<h1>LINK: Approximate linking of records</h1>
+		<h1>FLINK: Approximate linking of records</h1>
  
 		<p></p>
 		<p></p>
  
 		<form name="encodeform">
+			<p>Frode's fuzzy linking of records from two spreadsheets. 
+				Load two spreaksheets, indicate linking columns 
+				and generate new spreadsheet with linked records.
+				All processing is performed locally in your browser. 
+				Matching is based on an asymmetric adaptation of 
+				the Sørensen-Dice measure.</p>
 			<h2>Add files to link</h2>
 			<ul>
 				<li>
 					<label for="file-selector1"><span>File 1</span></label>
 					<input type="file" id="file-selector1" accept=".xlsx, .xls, .csv">
-						<script>
-							loadBinaryFile("1");
-						</script>
 				</li>
-				<p id="table1" />
-		<p id="messageFile1" />					
+				<p id="table1"></p>
+		<p id="messageFile1"></p>					
 				
-				<p/>
+				<p></p>
 				<li>						
 					<label for="file-selector2"><span>File 2</span></label>				
 					<input type="file" id="file-selector2" accept=".xls, .xlsx, .csv">
-					<script>
-						loadBinaryFile("2");
-					</script>
 				</li>
-				<p id="table2" />
-		<p id="messageFile2" />					
+				<p id="table2"></p>
+		<p id="messageFile2"></p>					
 			</ul>				
-			<p/>	
+			<p></p>	
 				<button type="submit" onClick="return mergeOnFirstColumns()">Link files again</button> 				
 				<button type="submit" onClick="return outputSpreadsheet()">Download linked file</button> 		
 			<ul>
@@ -63,23 +63,26 @@
 				
 						
   				</li>
-			</ul>				
-			<p/>	
+			</ul>
 
-									   
-			<p/>
+			<p></p>	
+
+			<p id="statusMessageId" class="statusMessage">ASSUMPTION: Column headers required in first row.</p>
+
+			
+			<p></p>
 				
-		<p id="matchingId" />		
+		<p id="matchingId"></p>		
 
-		<p/>
+		<p></p>
 		
-		<p id="nonmatching1Id" />
+		<p id="nonmatching1Id"></p>
 
-		<p id="nonmatching2Id" />
+		<p id="nonmatching2Id"></p>
 	
-		<p id="duplicates1Id" />
+		<p id="duplicates1Id"></p>
 
-		<p id="duplicates2Id" />
+		<p id="duplicates2Id"></p>
 
 		</form>		
 	</body>
