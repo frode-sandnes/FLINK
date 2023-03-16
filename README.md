@@ -3,4 +3,4 @@
 This implementation uses the DICE string similarity measure.
 Also relies on the SheetJS library.
 
-Live version available at: https://frode-sandnes.github.io/LINKER/
+Live version available at: https://frode-sandnes.github.io/FLINK/
