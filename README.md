@@ -1,5 +1,5 @@
-# LINKER
-"Fuzzy" linking of records. Input is spreadsheet docs in xsl or csv format. 
+# FLINK
+"Fuzzy" or frode's linking of records. Input is spreadsheet in xsl, xlsx or csv format. 
 This implementation uses the DICE string similarity measure.
 Also relies on the SheetJS library.
 
