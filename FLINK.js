@@ -73,6 +73,7 @@ function loadSpreadSheet(event,selector)
 				const sheetName = workbook.SheetNames[0];	// selecting the first one 
 				let XL_row_object = XLSX.utils.sheet_to_row_object_array(workbook.Sheets[sheetName]);
 				let json_object = JSON.stringify(XL_row_object);
+	//			json_object = json_object.normalize();
 				if (selector === "1")
 					{
 					file1 = json_object;	
@@ -206,8 +207,92 @@ function alterRecordHeader(r, suffix)
 	[...Object.keys(r)].forEach(head => renameKey(r, head, head+suffix));
 	}
 // find set of elements in two lists that are above the threshold in similarity	
+// more robust approach
 function matchingElements(key1, key2, keylist1, keylist2, acceptLimit, keyrow1, keyrow2)
 	{
+	// create list of distances above acceptLimit
+	let topDistances = keylist1.flatMap((value1,i) =>
+		{
+		return keylist2.reduce((accumulator,value2,j) => 
+			{
+			let distance = dice(value1, value2);
+			if (isNaN(distance) || !isFinite(distance))
+				{
+				return accumulator;	
+				}
+			if (distance < acceptLimit)
+				{
+				return accumulator;	
+				}
+			return [...accumulator, {distance: distance, i: i, j:j}];
+			}, [])
+		});
+		// sort list of distances in decending order
+	topDistances.sort((a, b) => b.distance - a.distance);
+	// go through list, pick pairs that are not already selected
+	// if selected mark as selected
+	let selectedList1 = {};
+	let selectedList2 = {};
+	let matches = [];
+	topDistances.forEach(entry => 
+		{
+		let {i, j} = entry;
+		if (i in selectedList1)
+			{
+			return;	
+			}
+		if (j in selectedList2)
+			{
+			return;	
+			}
+		matches.push(entry);
+		selectedList1 = {...selectedList1, [i]:i};
+		selectedList2 = {...selectedList2, [j]:j};
+		});
+	let selstr1 = keylist1.filter((value, i) => (i in selectedList1));
+	let selstr2 = keylist2.filter((value, j) => (j in selectedList2));
+let matstr = matches.map(({distance,i,j}) => ({distance:distance, i:keylist1[i], j:keylist2[j]}));
+
+		// find unselected based on those not selected
+	let unselectedList1 = keylist1.filter((value, i) => !(i in selectedList1));
+	let unselectedList2 = keylist2.filter((value, j) => !(j in selectedList2));
+	// can return compund object with all the results	
+//	console.log("acceptLimit",acceptLimit);
+//	console.log("keylist1",keylist1)	
+//	console.log("matches",matches);
+//	console.log("matches",matstr);
+//	console.log("selectedList1",selectedList1);
+//	console.log("selectedList2",selectedList2);
+//	console.log("selectedList1",selstr1);
+//	console.log("selectedList2",selstr2);
+//	console.log("unselectedList1",unselectedList1);
+//	console.log("unselectedList2",unselectedList2);
+	// prepare the right format
+	let match = matches.map(({distance, i, j}) => 
+		{
+		let r1 = getRecord2(keyrow1, keylist1[i]);	
+		alterRecordHeader(r1, "-1");
+		let r2 = getRecord2(keyrow2, keylist2[j]);			
+		alterRecordHeader(r2, "-2");
+		let r3 = {similarity: distance.toFixed(2), [key1]: keylist1[i], [key2]: keylist2[j]};
+		let r = {...r3, ...r1, ...r2};		
+		return r;			
+		});
+//	console.log("unselectedList1",unselectedList1);
+	return {match: match, unmatched1: unselectedList1, unmatched2: unselectedList2};
+	}
+// find set of elements in two lists that are above the threshold in similarity	
+function 
+matchingElements2(key1, key2, keylist1, keylist2, acceptLimit, keyrow1, keyrow2)
+	{
+/*console.log(key1)		
+console.log(key2)
+console.log(keylist1)		
+console.log(keylist2)		
+console.log(keyrow1)		
+console.log(keyrow2)		
+console.log(acceptLimit)	*/	
+
 	// fore each item in keylist1 - find the item with highest match in keylist2
 	const matching = keylist1.map(value1 => 
 								{		// calc stuff we need
@@ -238,7 +323,11 @@ function matchingElements(key1, key2, keylist1, keylist2, acceptLimit, keyrow1, 
 								});
 	//  remove items that have been selected
 	const selected = matching.map(row => row[key1+"-1"]);
+//console.log("selected",selected);	
+//console.log("before",keylist1)	
+// here does not work - need rework
 	subtractElements(keylist1, selected);
+//console.log("after",keylist1)	
 	return matching;
 	}
 // return elements in the same list that are above the threshold of similarity	
@@ -252,7 +341,9 @@ function similarElements(key, keylist, acceptLimit)
 // find records for keylist
 function retrieveElements2(keylist, keyrow)
 	{
-	return keylist.map(key => getRecord2(keyrow, key));
+//console.log("variables: ", keylist,keyrow);
+//console.log("sjekk: ",keylist.map(key => getRecord2(keyrow, key)));
+return keylist.map(key => getRecord2(keyrow, key));
 	}	
 // attach a distance undefined column so that users of spreadsheet sees the full range of records	
 function labelAsUnmatched(unmatched)
@@ -299,7 +390,7 @@ function mergeOnFirstColumns()
 	const keyrow1 = getColumns(sheet1, "table1", headers1);
 	const keyrow2 = getColumns(sheet2, "table2", headers2);
 	const keylist1 = [...keyrow1.keys];	// shallow true copy of arrays
-	const keylist2 = [...keyrow2.keys];	
+	const keylist2 = [...keyrow2.keys];
 	// check for duplicated entries, if duplicates - output warning
 	checkDuplicates(keylist1, "messageFile1");
 	checkDuplicates(keylist2, "messageFile2");
@@ -307,12 +398,21 @@ function mergeOnFirstColumns()
 	const similarList1 = similarElements(key1, keylist1, acceptLimit);	
 	const similarList2 = similarElements(key2, keylist2, acceptLimit);		
 	// Then, assign matches that are above limit
-	let match = matchingElements(key1, key2, keylist1, keylist2, acceptLimit, keyrow1, keyrow2);	
+//	let match = [], unmatched1 = [], unmathced2 = [];	
+	let {match, unmatched1, unmatched2} = matchingElements(key1, key2, keylist1, keylist2, acceptLimit, keyrow1, keyrow2);	
+	// create table format for output
+//console.log("sheet1",sheet1);	
+//console.log("unmatched1",unmatched1);	
+//	unmatched1 = sheet1.filter(row => unmatched1.includes(row[keyrow1]));
+//	unmatched2 = sheet2.filter(row => unmatched2.includes(row[keyrow2]));
+	unmatched1 = retrieveElements2(unmatched1, keyrow1);
+	unmatched2 = retrieveElements2(unmatched2, keyrow2);	
+//	let match = matchingElements(key1, key2, keylist1, keylist2, acceptLimit, keyrow1, keyrow2);	
 	// Make a deep true copy of match as some here make alterations to the headers in the structure
 	match = JSON.parse(JSON.stringify(match));
 	// Finally, add assign the rest as no matches.		
-	let unmatched1 = retrieveElements2(keylist1, keyrow1);
-	let unmatched2 = retrieveElements2(keylist2, keyrow2);
+//	let unmatched1 = retrieveElements2(keylist1, keyrow1);
+//	let unmatched2 = retrieveElements2(keylist2, keyrow2);
 	// output the result
 	outputGrid(match, "matchingId", "Matching items", "lime");
 	const name1 = document.getElementById("file-selector1").value.split(/(\\|\/)/g).pop();
@@ -321,6 +421,11 @@ function mergeOnFirstColumns()
 	outputGrid(unmatched2, "nonmatching2Id", "Non-matching items in " + name2, "orangered");	
 	outputGrid(similarList1, "duplicates1Id", "Possible dubplicates in " + name1, "orangered");	
 	outputGrid(similarList2, "duplicates2Id", "Possible dubplicates in " + name2, "orangered");	
+//console.log("matching",match);
+//console.log("unmatched1",unmatched1);
+//console.log("unmatched2",unmatched2);
+//console.log("similarList1",similarList1);
+//console.log("similarList2",similarList2);
 	// alther the heading so that columns are associated correctly
 	alterAllRecordHeaders(unmatched1, "-1");
 	alterAllRecordHeaders(unmatched2, "-2");
